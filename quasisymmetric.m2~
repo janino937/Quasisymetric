@@ -1,0 +1,12 @@
+
+
+subsets toList (1..2)
+
+subsets (toList (1..5),
+    
+
+strongCompositions = method ()
+strongCompositions(ZZ):= n -> (
+    sets = subsets toList(1..(n-1));
+    apply(sets, s -> setToComposition)
+    )
