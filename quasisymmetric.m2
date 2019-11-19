@@ -21,6 +21,11 @@ export{"monomialQuasisymmetricPolynomials"}
 export{"fundamentalQuasisymmetricPolynomial"}
 export{"fundamentalQuasisymmetricPolynomials"}
 
+export{"isDyckPath"}
+export{"trimZeros"}
+export{"transdiagonalPolynomial"}
+export{"transdiagonalPolynomials"}
+
 strongCompositions = method ()
 strongCompositions(ZZ):= n -> (
     sets := {{}};
@@ -98,14 +103,90 @@ fundamentalQuasisymmetricPolynomials(ZZ,PolynomialRing):= (d,R) -> (
     hashTable apply (comps, comp-> comp => fundamentalQuasisymmetricPolynomial(comp,R))
     )
 
+isDyckPath = method()
+isDyckPath(List) := (vect)-> (
+    
+    s := 0;
+    i := 0;
+    while i<#vect and s+vect#i <= i do (
+	s = s+vect#i;
+	i = i+1;
+	);
+    i == #vect
+    )
+
+trimZeros = method()
+trimZeros List := vect -> (
+    i:= #vect-1;
+    while (i>=0) and vect#i == 0 do (
+	vect = drop(vect,-1);
+	i = i-1;
+	);
+    vect
+    )
+
+transdiagonalPolynomial = method()
+transdiagonalPolynomial (List,PolynomialRing) := (vect,R) -> (
+    ans := 0_R;
+    vectOr := vect;
+    if not isDyckPath vect then (
+	vect = trimZeros vect;
+	i := position(vect, j-> j == 0, Reverse => true);
+	if(i === null) then(
+	    ans=fundamentalQuasisymmetricPolynomial(vect,R);
+	    print(vect,ans);
+	    )
+	else (
+	    vect=drop(vect,{i,i});
+	    ans = transdiagonalPolynomial(vect,R);
+	    a := vect#i;
+	    vect = drop(vect,{i,i});
+	    vect = insert(i,a-1,vect);
+	    
+	    ans = ans-R_i*transdiagonalPolynomial(vect,R);
+	    print(vect,i,R_i);
+	    print(vectOr,ans);
+	    ); 
+	);
+    ans 
+    )
+
+
+transdiagonalPolynomialBasis = method()
+transdiagonalPolynomialBasis (List,PolynomialRing) := (vect,R) -> (
+    ans := 0_R;
+    vectOr := vect;
+    if not isDyckPath vect then (
+	vect = trimZeros vect;
+	i := position(vect, j-> j == 0, Reverse => true);
+	if(i === null) then(
+	    ans=fundamentalQuasisymmetricPolynomial(vect,R);
+	    print(vect,ans);
+	    )
+	else (
+	    vect=drop(vect,{i,i});
+	    ans = transdiagonalPolynomial(vect,R);
+	    a := vect#i;
+	    vect = drop(vect,{i,i});
+	    vect = insert(i,a-1,vect);
+	    
+	    ans = ans-R_i*transdiagonalPolynomial(vect,R);
+	    print(vect,i,R_i);
+	    print(vectOr,ans);
+	    ); 
+	);
+    ans 
+    )
+
 beginDocumentation()
 
 end
 loadPackage("quasisymmetric",Reload=> true)
-R = QQ[x_1..x_4]
+R = QQ[x_1..x_4,MonomialOrder => Lex]
 comp = {2,1}
 monomialQuasisymmetricPolynomial(comp,R)
 i = 3
 monomialQuasisymmetricPolynomials(i,R)
 fundamentalQuasisymmetricPolynomials(i,R)
+transdiagonalPolynomial({1,1,0,1},R)
 
