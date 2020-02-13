@@ -22,9 +22,12 @@ export{"fundamentalQuasisymmetricPolynomial"}
 export{"fundamentalQuasisymmetricPolynomials"}
 
 export{"isDyckPath"}
+export{"dyckPaths"}
 export{"trimZeros"}
 export{"transdiagonalPolynomial"}
-export{"transdiagonalPolynomials"}
+export{"transdiagonalPolynomialBasis"}
+export{"vandermondeDeterminant"}
+export{"vandermondeDerivatives"}
 
 strongCompositions = method ()
 strongCompositions(ZZ):= n -> (
@@ -151,31 +154,45 @@ transdiagonalPolynomial (List,PolynomialRing) := (vect,R) -> (
     ans 
     )
 
-
 transdiagonalPolynomialBasis = method()
-transdiagonalPolynomialBasis (List,PolynomialRing) := (vect,R) -> (
-    ans := 0_R;
-    vectOr := vect;
-    if not isDyckPath vect then (
-	vect = trimZeros vect;
-	i := position(vect, j-> j == 0, Reverse => true);
-	if(i === null) then(
-	    ans=fundamentalQuasisymmetricPolynomial(vect,R);
-	    print(vect,ans);
-	    )
-	else (
-	    vect=drop(vect,{i,i});
-	    ans = transdiagonalPolynomial(vect,R);
-	    a := vect#i;
-	    vect = drop(vect,{i,i});
-	    vect = insert(i,a-1,vect);
-	    
-	    ans = ans-R_i*transdiagonalPolynomial(vect,R);
-	    print(vect,i,R_i);
-	    print(vectOr,ans);
-	    ); 
+transdiagonalPolynomialBasis PolynomialRing := R -> (
+    paths := dyckPaths (numgens R - 1 );
+    compositions := flatten values paths;
+    compositions = apply (compositions, c -> c + append(toList( (#c-1):0 ),1));
+    apply( compositions, c-> transdiagonalPolynomial(c,R)) 
+    )
+
+dyckPaths = method()
+dyckPaths ZZ := n -> (
+    ans := new MutableHashTable;
+    ans#0 = {{0}};
+    if n != 0 then (
+	previous := dyckPaths(n-1);
+	newPaths := {};
+	for i to n-1 do (
+	    prefix := apply(previous#i, l-> prepend(0,l) + append(toList((i+1):0),1) );
+	    sufix := apply(previous#(n-1-i), l-> drop(l,1));
+	    newPaths = newPaths | flatten apply(prefix, p -> apply(sufix, s -> p|s ));
+	    );
+	ans = previous;
+	ans#n = newPaths;
 	);
-    ans 
+    ans
+    )
+    
+vandermondeDeterminant = method()
+vandermondeDeterminant PolynomialRing:= R->(
+    lista:= toList ( 0.. (numgens R)-1 );
+    variables := apply(lista,i-> R_i);
+    product flatten apply (#lista, i->toList apply( (i+1)..(#lista-1),j-> (variables#j-variables#i) ) )
+    )
+
+vandermondeDerivatives = method()
+vandermondeDerivatives(ZZ,PolynomialRing) := (i,R) -> (
+    
+    monomialList := basis(i,R);
+    vdet := vandermondeDeterminant R;
+    flatten entries diff( transpose monomialList, vdet )   
     )
 
 beginDocumentation()
@@ -185,8 +202,23 @@ loadPackage("quasisymmetric",Reload=> true)
 R = QQ[x_1..x_4,MonomialOrder => Lex]
 comp = {2,1}
 monomialQuasisymmetricPolynomial(comp,R)
-i = 3
+i = 1
 monomialQuasisymmetricPolynomials(i,R)
 fundamentalQuasisymmetricPolynomials(i,R)
-transdiagonalPolynomial({1,1,0,1},R)
+transdiagonalPolynomial({1,0,0},R)
+transdiagonalPolynomial({0,2,0},R)
+transdiagonalPolynomial({0,0,3},R)
+transdiagonalPolynomial({0,1,2},R)
 
+
+time ans = new HashTable from  dyckPaths(2);
+
+vandermondeDeterminant R
+transdiagonalPolynomialBasis R
+
+vandermondeDerivatives(1,R)
+
+
+
+
+ 
